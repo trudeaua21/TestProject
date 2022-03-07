@@ -13,7 +13,7 @@ jobs:
       PrevPackageNameField: \[YourPackageName\]
       # Your current settings :
       CompanyNameField: open-source-unity-package
-      PackageNameField: package-name
+      PackageNameField: test-package
     
     steps:
       ###########################
