@@ -3,82 +3,64 @@
 #   UNITY_LICENSE:
 name: Run Tests 🧪
 
-on: 
-  push:
-      branches:
-          - main
-          - develop
-          #- 'feature/**'
-      paths:
-        - 'Editor/**'
-        - 'Runtime/**'
-        - 'Samples~/**'
-        - 'Tests/**'
-  pull_request:
-    types:
-      - opened
-      - synchronize
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  buildAndTestForSomePlatforms:
-    name: Test on ${{ matrix.unityVersion }} for ${{ matrix.targetPlatform }}
+  testAllPackageModesLikeInTheReadme:
+    name: Test package mode 📦 in ${{ matrix.testMode }} on version ${{ matrix.unityVersion }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        projectPath:
+          - ./
         unityVersion:
-          - 2018.4.30f1
-          - 2019.1.14f1
-          - 2019.2.21f1
-          - 2019.3.15f1
-          - 2019.4.16f1
-          - 2020.1.17f1
-          - 2020.2.1f1
-        targetPlatform:
-          # - StandaloneOSX # Build a macOS standalone (Intel 64-bit).
-          - StandaloneWindows64 # Build a Windows 64-bit standalone.
-          # - StandaloneLinux64 # Build a Linux 64-bit standalone.
-          # - iOS # Build an iOS player.
-          # - Android # Build an Android player.
-          # - WebGL # WebGL.
+          - 2019.2.11f1
+          #- 2020.3.29f1
+        testMode:
+          - editmode
+          #- playmode
     steps:
-      # Checkout sandbox project
+      ###########################
+      #         Checkout        #
+      ###########################
       - uses: actions/checkout@v2
-        with:
-          ref: sandbox
-          submodules: true
-          fetch-depth: 0
-
-      # Update package submodule
-      - name: "Update package submodule"
-        working-directory: Packages/dev
-        run: git checkout ${{ github.sha }}
-            
-      # ???
-      - uses: actions/cache@v2
-        with:
-          path: Library
-          key: Library-${{ matrix.unityVersion }}-${{ github.sha }}
-          restore-keys: |
-            Library-${{ matrix.unityVersion }}-
-            Library-
-            
-      # Run tests
-      - name: "Run tests"
-        uses: game-ci/unity-test-runner@main
-        with:
-          unityVersion: ${{ matrix.unityVersion }}
-          # List of parameters here : https://docs.unity3d.com/Manual/CommandLineArguments.html
-          # assemblyFilters: https://docs.unity3d.com/Packages/com.unity.testtools.codecoverage@0.2/manual/UsingCodeCoverage.html
-          customParameters: -nographics -enableCodeCoverage -coverageOptions assemblyFilters:+TODO_COMPAGNIE_NAME.TODO_PACKAGENAME.*Tests
+        
+      #######################
+      #         Test        #
+      #######################
+      # Configure test runner
+      - name: Run tests
+        id: packageEditMode
+        uses: trudeaua21/unity-test-runner@main
         env:
+          # Personal license
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-      
-      # Upload test results
+        with:
+          projectPath: ${{ matrix.projectPath }}
+          unityVersion: ${{ matrix.unityVersion }}
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: ${{ matrix.testMode }}-packageArtifacts
+          packageMode: true
+          
+      #############################
+      #         Debug repo        #
+      #############################
+      - run: ls -la
+        # Execute even if the previous step failed
+        if: always()
+        working-directory: ${{ github.workspace }}/${{ matrix.testMode }}-packageArtifacts
+
+      #############################
+      #   Upload artifacts        #
+      #############################
       - name: Upload test results
         uses: actions/upload-artifact@v2
-        if: always()
         with:
-          name: Test results (edit + play, ${{ matrix.unityVersion }}-${{ matrix.targetPlatform }}
-          path: ${{ steps.testRunner.outputs.artifactsPath }}
+          name: Package test results (${{ matrix.testMode }})
+          path: ${{ steps.packageEditMode.outputs.artifactsPath }}
+          retention-days: 14
