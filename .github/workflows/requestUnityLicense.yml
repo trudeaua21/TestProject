@@ -1,3 +1,4 @@
+# Follow these steps : https://game.ci/docs/github/activation
 name: Acquire activation file 🔑
 on:
   workflow_dispatch: {}
