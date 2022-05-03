@@ -36,7 +36,7 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          projectPath: "."
+          projectPath: "./com.example.open-source-unity-package"
           unityVersion: "2020.3.0f1"
           testMode: all
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+open-source-unity-package.test-package.*,-*Tests*'
